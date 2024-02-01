@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhackHole</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url("{% static 'images/background.png' %}");
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-container {
+            position: relative;
+            height: 30%;
+            width: 75%;
+        }
+
+        .title-background {
+            position: absolute;
+            left: 32%;
+            width: 27vw;
+            height: 9vw;
+            background: url("{% static 'images/titleBackground.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        .title {
+            position: absolute;
+            left: 32%;
+            transform: translate(10%, 15%);
+            z-index: 1;
+            font-size: 4.5vw;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .loginForm {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            margin-bottom: 1vh;
+            padding: 1vh;
+            font-size: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        button#logoutButton {
+            background-color: red;
+        }
+
+        .alert {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .user_text {
+            position: absolute;
+            right: 1%;
+            top: 1%;
+            z-index: 1;
+            font-size: 1.5vw;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+    </style>
+</head>
+<body>
+    <p class="user_text">歡迎, {{ username }}</p>
+    <div class="title-container">
+        <div class="title-background"></div>
+        <div class="title">WhackHole</div>
+    </div>
+    {% if username %}
+    <div class="welcome">
+        <button type="button" id="startButton">開始遊戲</button>
+        <p></p>
+        <button type="button" id="leaderBoardButton">排行榜</button>
+        <p></p>
+        <button type="button" id="playRecordButton">遊玩紀錄</button>
+        <p></p>
+        <button type="button" onclick="logout()" id="logoutButton">登出</button>
+    </div>
+    {% else %}
+    <script>
+        alert("尚未登入");
+        window.location.href = "{% url 'login' %}";
+    </script>
+    {% endif %}
+
+    <script>
+        // 登出按鈕事件
+        async function logout() {
+            try {
+                const response = await fetch("{% url 'game:logout_view' %}", {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.alertMessage);
+                    window.location.href = "{% url 'login' %}";
+                } else {
+                    console.error('Error during logout:', data.alertMessage);
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
+        }
+
+        // 開始遊戲按鈕事件
+        document.getElementById("startButton").addEventListener("click", function() {
+            window.location.href = "{% url 'game:game_start' %}";
+        });
+
+        // 排行榜按鈕事件
+        document.getElementById("leaderBoardButton").addEventListener("click", function() {
+            window.location.href = "{% url 'leaderboard_url:show_leader' %}";
+        });
+
+        // 遊玩紀錄按鈕事件
+        document.getElementById("playRecordButton").addEventListener("click", function() {
+            window.location.href = "{% url 'record_url:show_record' %}";
+        });
+    </script>
+</body>
+</html>

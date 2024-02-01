@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhackHole</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url("{% static 'images/background.png' %}");
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-container {
+            position: relative;
+            height: 30%;
+            width: 75%;
+        }
+
+        .title-background {
+            position: absolute;
+            left: 32%;
+            width: 27vw;
+            height: 9vw;
+            background: url("{% static 'images/titleBackground.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        .title {
+            position: absolute;
+            left: 32%;
+            transform: translate(10%, 15%);
+            z-index: 1;
+            font-size: 4.5vw;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .loginForm {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            margin-bottom: 1vh;
+            padding: 1vh;
+            font-size: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        button#registerButton {
+            padding: 10px;
+            background-color: transparent;
+            color: #2196F3;
+            border: none;
+            border-radius: 0;
+            font-size: 15px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .alert {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <div class="title-background"></div>
+        <div class="title">WhackHole</div>
+    </div>
+    <form class="loginForm">
+        <h1>登入</h1>
+        <input type="text" id="username" placeholder="請輸入使用者名稱" required>
+        <input type="password" id="password" placeholder="請輸入密碼" required>
+        <div class="alert" id="alertMessage"></div>
+        <button type="button" id="login-button" onclick="login()">登入</button>
+        <button id="registerButton">建立使用者</button>
+    </form>
+    <!-- 內容 -->
+
+    <script>
+        document.getElementById("registerButton").addEventListener("click", function() {
+            window.location.href = "{% url 'register' %}";
+        });
+
+        async function login() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch("{% url 'login_view' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: new URLSearchParams({
+                        'username': username,
+                        'password': password,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok & data.alertMessage == "登入成功") {
+                    alert(data.alertMessage);
+                    window.location.href = "{% url 'game:whackhole' %}";
+                } else if (response.ok) {
+                    document.getElementById('alertMessage').innerText = data.alertMessage;
+                    document.getElementById('alertMessage').style.display = 'block';
+                } else {
+                    console.error('Error during login:', error);
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+            }
+        }
+    </script>
+</body>
+</html>

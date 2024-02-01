@@ -1,0 +1,305 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhackHole</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url("{% static 'images/background.png' %}");
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-container {
+            position: relative;
+            height: 30%;
+            width: 75%;
+        }
+
+        .title-background {
+            position: absolute;
+            left: 32%;
+            width: 27vw;
+            height: 9vw;
+            background: url("{% static 'images/titleBackground.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        .title {
+            position: absolute;
+            left: 32%;
+            transform: translate(10%, 15%);
+            z-index: 1;
+            font-size: 4.5vw;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 70vh;
+            overflow: hidden;
+        }
+
+        .hole {
+            position: absolute;
+            width: 96px;
+            height: 128px;
+            background: url("{% static 'images/hole.png' %}");
+            background-size: cover;
+        }
+
+        .gopher {
+            position: absolute;
+            width: 42px;
+            height: 88px;
+            background: url("{% static 'images/gopher.png' %}");
+            background-size: cover;
+            cursor: pointer;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: white;
+        }
+
+        #timer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .alert {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    {% if not username %}
+    <script>
+        alert("尚未登入");
+        window.location.href = "{% url 'login' %}";
+    </script>
+    {% endif %}
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        alert(msg);
+    </script>
+    
+    <div class="game-container" id="game-container"></div>
+    <div id="score"></div>
+    <div id="timer"></div>
+
+    <script>
+        let holeOccupied = [];
+
+        function findHoleIndex(clientX, clientY) {
+            const holes = document.querySelectorAll('.hole');
+
+            for (let i = 0; i < holes.length; i++) {
+                const hole = holes[i];
+                const rect = hole.getBoundingClientRect();
+
+                if (
+                    clientX >= rect.left &&
+                    clientX <= rect.right &&
+                    clientY >= rect.top &&
+                    clientY <= rect.bottom
+                ) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        // 遊戲初始，倒數
+        function startGame() {
+            displayCountdown(3);
+            setTimeout(() => {
+                hideCountdown();
+                initializeGame();
+                startTimer();
+            }, 3000);
+        }
+
+        function initializeGame() {
+            document.getElementById('score').innerText = `Score: ${score}s`;
+            document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+
+            createHoles();
+            setInterval(() => {
+                createGophers();
+            }, 1000);
+
+            document.getElementById('game-container').addEventListener('click', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.classList.contains('gopher')) {
+                    score++;
+                    document.getElementById('score').innerText = `Score: ${score}`;
+                    clickedElement.style.display = 'none';
+
+                    // 在點擊時找到點擊的洞索引
+                    const clickedHoleIndex = findHoleIndex(event.clientX, event.clientY);
+
+                    // 如果找到了有效的洞索引，將相應的holeOccupied設置為false
+                    if (clickedHoleIndex !== -1) {
+                        holeOccupied[clickedHoleIndex] = false;
+                    }
+                }
+            });
+        }
+
+        // 倒數結束，正式進行遊戲
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                } else {
+                    document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            alert(`Game Over! Your Score: ${score}`);
+            window.location.href = "{% url 'game:game_end' %}";
+        }
+
+        // Hole 建置
+        function createHoles() {
+            const gameContainer = document.getElementById('game-container');
+            holeOccupied = [];
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const hole = document.createElement('div');
+                    hole.className = 'hole';
+
+                    const leftPosition = (i / 3) * gameContainer.offsetWidth + gameContainer.offsetWidth / 10;
+                    const topPosition = (j / 3) * gameContainer.offsetHeight + gameContainer.offsetWidth / 30;
+
+                    hole.style.left = `${leftPosition}px`;
+                    hole.style.top = `${topPosition}px`;
+
+                    gameContainer.appendChild(hole);
+                    holeOccupied.push(false);
+                }
+            }
+        }
+
+        // 招喚地鼠
+        function createGophers() {
+            // 招喚1~3個地鼠
+            const gopherCount = Math.floor(Math.random() * 3) + 1;
+            const holes = document.querySelectorAll('.hole');
+
+            // 隨機招喚gopherCount個地鼠到Hole上，如果該Hole已經有地鼠則不招喚
+            for (let i = 0; i < gopherCount; i++) {
+                let randomHoleIndex = Math.floor(Math.random() * holes.length);
+                if (holeOccupied[randomHoleIndex]) {
+                    continue;
+                }
+
+                holeOccupied[randomHoleIndex] = true;
+
+                const hole = holes[randomHoleIndex];
+                const gopher = document.createElement('div');
+                gopher.className = 'gopher';
+
+                const holeWidth = hole.offsetWidth;
+                const holeHeight = hole.offsetHeight;
+
+                const leftPosition = hole.offsetLeft + (holeWidth - 96 / 2) / 2;
+                const topPosition = hole.offsetTop + (holeHeight - 128 * 3 / 2) / 2;
+
+                gopher.style.left = `${leftPosition}px`;
+                gopher.style.top = `${topPosition}px`;
+
+                // 在地鼠上添加屬性來存儲創建時間
+                gopher.createdTime = new Date().getTime();
+
+                document.getElementById('game-container').appendChild(gopher);
+
+                // 設置3秒後檢查是否要自動清除地鼠
+                setTimeout(() => {
+                    checkAndRemoveGopher(gopher, randomHoleIndex);
+                }, 3000);
+            }
+        }
+
+        // 是否清除地鼠
+        function checkAndRemoveGopher(gopher, holeIndex) {
+            const currentTime = new Date().getTime();
+            const elapsedTime = currentTime - gopher.createdTime;
+
+            if (elapsedTime >= 3000) {
+                gopher.remove();
+                holeOccupied[holeIndex] = false;
+            }
+        }
+
+        // 開始倒數
+        function displayCountdown(seconds) {
+            const countdown = document.createElement('div');
+            countdown.innerText = seconds;
+            countdown.style.position = 'absolute';
+            countdown.style.top = '50%';
+            countdown.style.left = '50%';
+            countdown.style.transform = 'translate(-50%, -50%)';
+            countdown.style.fontSize = '48px';
+            countdown.style.color = 'white';
+            countdown.style.zIndex = '999';
+            document.getElementById('game-container').appendChild(countdown);
+
+            let currentSecond = seconds;
+
+            const countdownInterval = setInterval(() => {
+                currentSecond--;
+                countdown.innerText = currentSecond;
+
+                if (currentSecond === 0) {
+                    clearInterval(countdownInterval);
+                    countdown.remove();
+                }
+            }, 1000);
+        }
+
+        function hideCountdown() {
+            const countdown = document.querySelector('#game-container div');
+            if (countdown) {
+                countdown.remove();
+            }
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhackHole</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url("{% static 'images/background.png' %}");
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-container {
+            position: relative;
+            height: 30%;
+            width: 75%;
+        }
+
+        .title-background {
+            position: absolute;
+            left: 32%;
+            width: 27vw;
+            height: 9vw;
+            background: url("{% static 'images/titleBackground.png' %}");
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        .title {
+            position: absolute;
+            left: 32%;
+            transform: translate(10%, 15%);
+            z-index: 1;
+            font-size: 4.5vw;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .leaderboard-container {
+            margin-top: 20px;
+            width: 50%;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-header {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .header-item {
+            flex: 1;
+        }
+
+        .leaderboard-entry {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .my-entry {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- 排行榜區域 -->
+    <div class="leaderboard-container">
+        <div class="leaderboard-header">
+            <span>排名</span>
+            <span>使用者</span>
+            <span>最佳分數</span>
+        </div>
+        {% for entry in all_leader|slice:":10" %}
+            <div class="leaderboard-entry">
+                <span>{{ entry.rank }}</span>
+                <span>{{ entry.username }}</span>
+                <span>{{ entry.bestscore }}</span>
+            </div>
+        {% endfor %}
+        {% for entry in all_leader %}
+            {% if entry.username == username %}
+                <div class="leaderboard-entry my-entry">
+                    <span>{{ entry.rank }}</span>
+                    <span>{{ entry.username }}</span>
+                    <span>{{ entry.bestscore }}</span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <p></p>
+    <button type="button" id="returnButton">返回</button>
+
+
+    <script>
+        // 返回按鈕事件
+        document.getElementById("returnButton").addEventListener("click", function() {
+            window.location.href = "{% url 'game:whackhole' %}";
+        });
+    </script>
+</body>
+</html>
